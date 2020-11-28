@@ -127,6 +127,10 @@ router.get('/:id', async (req, res) => {
 router.post('/:rewardId/user/:userId', async (req, res) => {
     try {
         const reward = await Reward.findOne({ where: { id: req.params.rewardId } });
+        if (!reward) {
+            res.status(404).json({ message: 'invalid reward id' })
+            return;
+        }
         if (new Date() > new Date(reward.expiryDate)) {
             res.status(400).json({ message: 'invalid date' });
             return;

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { User } = require('../database/models');
+const { User, RelUserReward } = require('../database/models');
 
 /**
  * @swagger
@@ -70,5 +70,72 @@ router.post('/', async (req, res) => {
         res.status(400).json({ err })
     }
 });
+
+/**
+ * @swagger
+ * /users/{id}:
+ *   get:
+ *     description: Returns user with rewards
+ *     tags:
+ *      - Users
+ *     parameters:
+ *      - name: id
+ *        in: path
+ *        required: true
+ *     responses:
+ *       200:
+ *         description: rewards
+ */
+router.get('/:id', async (req, res) => {
+    try {
+        const user = await User.findOne({
+            where: {
+                id: req.params.id
+            },
+            include: {
+                model: RelUserReward,
+                attributes: ['rewardId'],
+                as: 'rewards'
+            }
+        });
+        res.json(user);
+    } catch (err) {
+        res.status(400).json({ err })
+    }
+});
+
+
+
+/**
+ * @swagger
+ * /users/{userId}/reward/{rewardId}:
+ *   post:
+ *     description: Returns relation 
+ *     tags:
+ *      - Users
+ *     parameters:
+ *      - name: rewardId
+ *        in: path
+ *        required: true
+ *      - name: userId
+ *        in: path
+ *        required: true
+ *     responses:
+ *       201:
+ *         description: relation
+ */
+router.post('/:userId/reward/:rewardId', async (req, res) => {
+    try {
+        const user = await User.findOne({ where: { id: req.params.userId } });
+        if (!user) {
+            res.status(404).json({ message: 'invalid user id' })
+            return;
+        }
+        const relUserReward = await RelUserReward.create(req.params)
+        res.status(201).json(relUserReward.toJSON())
+    } catch (err) {
+        res.status(400).json({ err })
+    }
+})
 
 module.exports = router;
