@@ -59,7 +59,7 @@ router.get('/', async (req, res) => {
 *             schema:
 *               $ref: "#/definitions/User"
 *       responses:
-*           200:
+*           201:
 *               description: user
 */
 router.post('/', async (req, res) => {
