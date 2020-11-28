@@ -11,6 +11,12 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+      Reward.hasMany(models.RelUserReward, {
+        foreignKey: {
+          field: 'reward'
+        },
+        as: 'users'
+      })
     }
   };
   Reward.init({
