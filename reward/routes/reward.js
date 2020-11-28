@@ -1,3 +1,4 @@
+const { Router } = require('express');
 const express = require('express');
 const router = express.Router();
 const { Reward, RelUserReward } = require('../database/models');
@@ -93,7 +94,7 @@ router.get('/:id', async (req, res) => {
             },
             include: {
                 model: RelUserReward,
-                attributes: ['user'],
+                attributes: ['userId'],
                 as: 'users'
             }
         });
@@ -103,4 +104,37 @@ router.get('/:id', async (req, res) => {
     }
 });
 
+
+
+/**
+ * @swagger
+ * /rewards/{rewardId}/user/{userId}:
+ *   post:
+ *     description: Returns relation 
+ *     tags:
+ *      - Rewards
+ *     parameters:
+ *      - name: rewardId
+ *        in: path
+ *        required: true
+ *      - name: userId
+ *        in: path
+ *        required: true
+ *     responses:
+ *       201:
+ *         description: relation
+ */
+router.post('/:rewardId/user/:userId', async (req, res) => {
+    try {
+        const reward = await Reward.findOne({ where: { id: req.params.rewardId } });
+        if (new Date() > new Date(reward.expiryDate)) {
+            res.status(400).json({ message: 'invalid date' });
+            return;
+        }
+        const relUserReward = await RelUserReward.create(req.params)
+        res.status(201).json(relUserReward.toJSON())
+    } catch (err) {
+        res.status(400).json({ err })
+    }
+})
 module.exports = router;

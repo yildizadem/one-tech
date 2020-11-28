@@ -14,8 +14,8 @@ module.exports = (sequelize, DataTypes) => {
     }
   };
   RelUserReward.init({
-    user: DataTypes.INTEGER,
-    reward: DataTypes.INTEGER
+    userId: DataTypes.INTEGER,
+    rewardId: DataTypes.INTEGER
   }, {
     sequelize,
     modelName: 'RelUserReward',
