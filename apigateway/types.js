@@ -7,6 +7,18 @@ const fetch = require('node-fetch');
 const USER_API_URL = 'http://localhost:3000/users';
 const REWARD_API_URL = 'http://localhost:3001/rewards';
 
+const UsersType = new GraphQLObjectType({
+    name: 'Users',
+    fields: () => ({
+        id: { type: GraphQLID },
+        name: { type: GraphQLString },
+        email: { type: GraphQLString },
+        phone: { type: GraphQLString },
+        country: { type: GraphQLString }
+    }),
+});
+
+
 const UserType = new GraphQLObjectType({
     name: 'User',
     fields: () => ({
@@ -16,12 +28,21 @@ const UserType = new GraphQLObjectType({
         phone: { type: GraphQLString },
         country: { type: GraphQLString },
         rewards: {
-            type: new GraphQLList(RewardType),
-            resolve: reward => {
-                return { test: 1 }
-                // Fetch the friends with the URLs `person.friends`
+            type: new GraphQLList(GraphQLID),
+            resolve: ({ rewards }) => {
+                return rewards.map(reward => reward.rewardId)
             }
         },
+    }),
+});
+
+const RewardsType = new GraphQLObjectType({
+    name: 'Rewards',
+    fields: () => ({
+        id: { type: GraphQLID },
+        name: { type: GraphQLString },
+        amount: { type: GraphQLInt },
+        expiryDate: { type: GraphQLString }
     }),
 });
 
@@ -33,10 +54,9 @@ const RewardType = new GraphQLObjectType({
         amount: { type: GraphQLInt },
         expiryDate: { type: GraphQLString },
         users: {
-            type: new GraphQLList(UserType),
-            resolve: user => {
-                return { name: 'test' }
-                // Fetch the friends with the URLs `person.friends`
+            type: new GraphQLList(GraphQLID),
+            resolve: ({ users }) => {
+                return users.map(user => user.userId)
             }
         },
     }),
@@ -47,7 +67,7 @@ module.exports = new GraphQLObjectType({
     description: 'The root of all... queries',
     fields: () => ({
         users: {
-            type: new GraphQLList(UserType),
+            type: new GraphQLList(UsersType),
             resolve: root => {
                 return fetch(USER_API_URL).then(response => response.json())
             }
@@ -55,14 +75,15 @@ module.exports = new GraphQLObjectType({
         user: {
             type: UserType,
             args: {
-                id: { type: GraphQLID },
+                id: {
+                    type: GraphQLID,
+
+                },
             },
-            resolve: (root, args) => {
-                // Fetch the person with ID `args.id`
-            }
+            resolve: (root, args) => fetch(`${USER_API_URL}/${args.id}`).then(response => response.json())
         },
         rewards: {
-            type: new GraphQLList(RewardType),
+            type: new GraphQLList(RewardsType),
             resolve: root => fetch(REWARD_API_URL).then(response => response.json())
         },
         reward: {
@@ -70,9 +91,7 @@ module.exports = new GraphQLObjectType({
             args: {
                 id: { type: GraphQLID },
             },
-            resolve: (root, args) => {
-                // Fetch the person with ID `args.id`
-            }
+            resolve: (root, args) => fetch(`${REWARD_API_URL}/${args.id}`).then(response => response.json())
         }
     }),
 });
