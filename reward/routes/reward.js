@@ -2,6 +2,7 @@ const { Router } = require('express');
 const express = require('express');
 const router = express.Router();
 const { Reward, RelUserReward } = require('../database/models');
+const rabbit = require('../tasks');
 
 /**
  * @swagger
@@ -126,6 +127,7 @@ router.get('/:id', async (req, res) => {
  */
 router.post('/:rewardId/user/:userId', async (req, res) => {
     try {
+        const channel = await rabbit;
         const reward = await Reward.findOne({ where: { id: req.params.rewardId } });
         if (!reward) {
             res.status(404).json({ message: 'invalid reward id' })
@@ -136,6 +138,9 @@ router.post('/:rewardId/user/:userId', async (req, res) => {
             return;
         }
         const relUserReward = await RelUserReward.create(req.params)
+        channel.sendToQueue('user_reward', Buffer.from(JSON.stringify(req.params)), {
+            persistent: true
+        })
         res.status(201).json(relUserReward.toJSON())
     } catch (err) {
         res.status(400).json({ err })
