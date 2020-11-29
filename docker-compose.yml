@@ -1,0 +1,97 @@
+version: "3.8"
+services: 
+  rabbitmq:
+    image: rabbitmq
+    container_name: rabbitmq
+    command: rabbitmq-server
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "localhost", "5672" ]
+      interval: 5s
+      timeout: 15s
+      retries: 1
+    networks: 
+      - main
+  reward-postgres:
+    container_name: reward-postgres
+    hostname: reward-postgres
+    image: postgres:latest
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    networks:
+      - main
+    expose:
+      - "5432"
+    restart: on-failure
+    volumes:
+      - reward-postgresql-data:/var/lib/postgresql/data
+  reward-app:
+    build: ./reward
+    command: sh -c "npm run migrate && npm run start"
+    ports: 
+      - "3001:3001"
+    depends_on:
+      - rabbitmq
+      - reward-postgres
+    networks: 
+      - main
+    environment: 
+      NODE_ENV: production
+      RABBITMQ_URL: amqp://rabbitmq
+    restart: on-failure
+  user-postgres:
+    container_name: user-postgres
+    hostname: user-postgres
+    image: postgres:latest
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    networks:
+      - main
+    expose:
+      - "5432"
+    restart: on-failure
+    depends_on: 
+      - reward-postgres
+    volumes:
+      - user-postgresql-data:/var/lib/postgresql/data
+  user-app:
+    build: ./user
+    command: sh -c "npm run migrate && npm run start"
+    ports: 
+      - "3000:3000"
+    depends_on:
+      - rabbitmq
+      - user-postgres
+      - reward-app
+    networks: 
+      - main
+    environment: 
+      NODE_ENV: production
+      RABBITMQ_URL: amqp://rabbitmq
+    restart: on-failure
+  apigateway-app:
+    build: ./apigateway
+    command: sh -c "npm run start"
+    ports: 
+      - "4000:4000"
+    depends_on:
+      - user-app
+      - reward-app
+    networks: 
+      - main
+    environment: 
+      USER_API_URL: http://user-app:3000/users
+      REWARD_API_URL: http://reward-app:3001/rewards
+    restart: on-failure
+networks:
+  main:
+
+volumes: 
+  reward-postgresql-data:
+  user-postgresql-data:

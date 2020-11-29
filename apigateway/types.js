@@ -4,8 +4,8 @@ const {
 } = require('graphql');
 const fetch = require('node-fetch');
 
-const USER_API_URL = 'http://localhost:3000/users';
-const REWARD_API_URL = 'http://localhost:3001/rewards';
+const USER_API_URL = process.env.USER_API_URL || 'http://localhost:3000/users';
+const REWARD_API_URL = process.env.REWARD_API_URL || 'http://localhost:3001/rewards';
 
 const UserType = new GraphQLObjectType({
     name: 'User',
