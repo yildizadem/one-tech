@@ -41,7 +41,7 @@ DATABASE: Reward DB
 docker-compose up
 ```
 
-You can see GraphQL Playground at *http//localhost:4000*
+You can see GraphQL Playground at [http//localhost:4000](http//localhost:4000)
 
 > http://localhost:3000 -> swagger user service
 
