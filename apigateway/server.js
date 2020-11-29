@@ -1,10 +1,11 @@
 const { ApolloServer } = require('apollo-server');
 const { GraphQLSchema } = require('graphql')
-const QueryType = require('./types');
+const { QueryType, MutationType } = require('./types');
 
 const server = new ApolloServer({
     schema: new GraphQLSchema({
-        query: QueryType
+        query: QueryType,
+        mutation: MutationType
     })
 });
 
